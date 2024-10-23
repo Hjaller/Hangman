@@ -24,26 +24,29 @@ namespace Hangman
         {
             int selectedIndex = 0;
 
+            Console.Clear();
+            Console.WriteLine("Use the arrow keys to navigate, and Enter to select an option:\n");
+
+            // Initial rendering of the menu
+            for (int i = 0; i < menuOptions.Length; i++)
+            {
+                if (i == selectedIndex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"> {menuOptions[i].OptionText}");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.WriteLine($"  {menuOptions[i].OptionText}");
+                }
+            }
+
             while (true)
             {
-                Console.Clear();
-                Console.WriteLine("Use the arrow keys to navigate, and Enter to select an option:\n");
-
-                for (int i = 0; i < menuOptions.Length; i++)
-                {
-                    if (i == selectedIndex)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"> {menuOptions[i].OptionText}");
-                        Console.ResetColor();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"  {menuOptions[i].OptionText}");
-                    }
-                }
-
                 var keyInfo = Console.ReadKey(intercept: true);
+                int previousIndex = selectedIndex;
+
                 if (keyInfo.Key == ConsoleKey.UpArrow)
                 {
                     selectedIndex--;
@@ -75,17 +78,29 @@ namespace Hangman
                         }
                     }
                 }
-
-                if (keyInfo.Key == ConsoleKey.Escape)
+                else if (keyInfo.Key == ConsoleKey.Escape)
                 {
                     ExitProgram();
                     return;
+                }
+
+                // Update only the changed lines
+                if (previousIndex != selectedIndex)
+                {
+                    Console.SetCursorPosition(0, previousIndex + 2); // +2 to account for the initial instructions
+                    Console.Write($"  {menuOptions[previousIndex].OptionText}  ");
+
+                    Console.SetCursorPosition(0, selectedIndex + 2);
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.Write($"> {menuOptions[selectedIndex].OptionText}");
+                    Console.ResetColor();
                 }
             }
         }
 
         static private void PlayGame()
         {
+            bool playAgain;
             do
             {
                 string[] words = LoadWordsFromFile();
@@ -128,15 +143,30 @@ namespace Hangman
                         break;
                     }
                 }
-            } while (AskToPlayAgain());
+
+                playAgain = AskToPlayAgain();
+            } while (playAgain);
         }
 
         static private bool AskToPlayAgain()
         {
-            Console.WriteLine("Do you want to play again? (y/n)");
+            Console.WriteLine("Do you want to play again? (y/n) or return to menu (m)");
             string? choice = Console.ReadLine();
-            return choice?.ToLower() == "y";
+            if (choice?.ToLower() == "y")
+            {
+                return true;
+            }
+            else if (choice?.ToLower() == "m")
+            {
+                return false;
+            }
+            else
+            {
+                Environment.Exit(0);
+                return false; // This line is never reached, but is required to satisfy the compiler.
+            }
         }
+
 
 
         static private void ShowGameStatus(char[] guessedWord, char[] incorrectGuesses, int incorrectGuessCount)
@@ -216,8 +246,17 @@ namespace Hangman
         static private char GetGuessFromUser()
         {
             Console.Write("Enter your guess: ");
-            return Console.ReadLine()[0];
+            string input = Console.ReadLine();
+
+            while (string.IsNullOrEmpty(input))
+            {
+                Console.WriteLine("Input cannot be empty. Please enter a valid guess: ");
+                input = Console.ReadLine();
+            }
+
+            return input[0];
         }
+
 
 
         static private string[] LoadWordsFromFile()
