@@ -13,7 +13,7 @@ namespace Hangman
             ShowMenu(MainMenuOptions);
         }
 
-        static private MenuOption[] MainMenuOptions = new MenuOption[]
+        static private MenuOption[] MainMenuOptions =
         {
             new MenuOption("New game", PlayGame),
             new MenuOption("Generate words", GenerateWordsToFile),
